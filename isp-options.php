@@ -16,3 +16,5 @@ $min_bandwidth = 0;
 $max_bandwidth = 1000;
 
 $default_timezone = 'America/New_York';
+
+$post_request_target = 'https://eca50bd4.ngrok.io/collectData.php';
