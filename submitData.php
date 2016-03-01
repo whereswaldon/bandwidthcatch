@@ -68,7 +68,7 @@
     }
 
     /*
-     *
+     * Ready the page to send data.
      */
     ready(function go() {
         var begin_button = document.getElementById('begin-button');
@@ -79,7 +79,7 @@
         var download_speed = undefined;
 
         /*
-         *
+         * Ensure that all required values in the form are present
          */
         var validateInputs = function() {
             return (isp_name_input.value != 'none'
@@ -88,18 +88,33 @@
         };
 
         /*
-         *
+         * Update the value of download_speed to a new sampling
          */
         var measureSpeed = function() {
+            var start_time, end_time = undefined;
+            var test = new Image();
+            test.onload = function loadImage() {
+                end_time = Date.now();
+            }
+            test.onerror = function loadError() {
+                console.log("error loading image.");
+                end_time = -1;
+            }
+            var suffix = '?nnn=' + Date.now();
+            var source_string = '<?= $image_path ?>?nnn=' + Date.now();
 
+            start_time = Date.now();
+            test.src = source_string;
+            while(end_time == undefined) {
+                ; //wait for image to load
+            }
+            download_speed = <?= $image_size ?> / (end_time - start_time); //bytes per second
         };
 
         /*
-         *
+         * Send the lastest data to be collected.
          */
         var sendReport = function() {
-            //TODO: Remove
-            download_speed = 1;
             if (download_speed == undefined) {
                 return;
             }
@@ -121,7 +136,7 @@
          */
         var beginReporting = function() {
             if (! validateInputs()) {
-                alert("Part of the form in incomplete. Could you doublecheck that you've "
+                alert("Part of the form is incomplete. Could you doublecheck that you've "
                     + "selected an ISP and your GPS coordinates and then try again?");
                 return;
             }
