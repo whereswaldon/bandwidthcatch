@@ -6,49 +6,62 @@
   <title>ISP Data Collector</title>
   <meta name="description" content="A data collector to sample internet speeds.">
   <meta name="author" content="Christopher Waldon">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"/>
   <!--[if lt IE 9]>
   <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
   <![endif]-->
 </head>
 
 <body>
-<form>
-    <fieldset>
-        <legend>ISP Data</legend>
+<div class="container">
+    <div class="row">
+        <div class="col-xs-12">
+            <form>
+                <fieldset>
+                    <legend>ISP Data</legend>
 
-        <?php
-            require('isp-options.php');
-        ?>
-        <label for="isp_name">Who is your Internet Service Provider?</label>
-        <select required id="isp_name" name="isp_name">
-            <option value="none">Select a provider</option>
-        <?php
-            foreach($isp_options as $option) {
-                echo "<option value=\"$option\">$option</option>";
-            }
-        ?>
-        </select>
-<br>
-        
-        <label for="paid_bandwidth">How many Megabits per second are you paying for?
-            (leave blank if unknown)</label>
-        <input type="number" id="paid_bandwidth" name="paid_bandwidth"
-        min="<?= $min_bandwidth ?>" max="<?= $max_bandwidth ?>">
-<br>
+                    <?php
+                        require('isp-options.php');
+                    ?>
+                    <label class="control-label" for="isp_name">Internet Service Provider</label>
+                    <select required id="isp_name" class="form-control" name="isp_name">
+                        <option value="none">Select a provider</option>
+                    <?php
+                        foreach($isp_options as $option) {
+                            echo "<option value=\"$option\">$option</option>";
+                        }
+                    ?>
+                    </select>
+                    <p class="help-block">This is the company that you pay for internet access, unless you live on campus. If you live on campus, please select "Campus." </p>
 
-        <label for="gps_north">What is your north GPS coordinate?</label>
-        <input required type="number" name="gps_north" id="gps_north"
-        min="<?= $min_north ?>" max="<?= $max_north ?>">
-<br>
+                    <label class="control-label" for="paid_bandwidth">Paid Speed (leave blank if unknown)</label>
+                    <input type="number" class="form-control" id="paid_bandwidth" name="paid_bandwidth"
+                    min="<?= $min_bandwidth ?>" max="<?= $max_bandwidth ?>">
+                    <p class="help-block">How many Megabits per second are you paying for? It's fine if you don't know, just leave this blank.</p>
 
-        <label for="gps_east">What is your east GPS coordinate?</label>
-        <input required type="number" name="gps_east" id="gps_east"
-        min="<?= $min_east ?>" max="<?= $max_east ?>">
-<br>
+                    <h3>Geolocation</h3>
+                    <p class="help-block">We're trying to gather this data completely anonymously, but we want to be able to tell your data apart from the data of other people. Instead of using your name or something else that's personally identifiable, we'd like to use your GPS coordinates. If you could just look them up and copy & paste them below, we'd really appreciate it.</p>
 
-        <button id="begin-button" type="button">Begin Collection</button>
-    </fieldset>
-</form>
+                    <p>
+                    <a class="btn btn-success" title="GPS Coordinate Lookup" href="http://www.gps-coordinates.net/" target="_blank">Look up Coordinates</a>
+                    </p>
+
+                    <label class="control-label" for="gps_north">Latitude (North)</label>
+                    <input required class="form-control" type="number" name="gps_north" id="gps_north"
+                    min="<?= $min_north ?>" max="<?= $max_north ?>">
+            <br>
+
+                    <label class="control-label" for="gps_east">Longitude (East)</label>
+                    <input required class="form-control" type="number" name="gps_east" id="gps_east"
+                    min="<?= $min_east ?>" max="<?= $max_east ?>">
+            <br>
+
+                    <button class="btn btn-info" id="begin-button" type="button">Begin Collection</button>
+                </fieldset>
+            </form>
+        </div>
+    </div>
+</div>
 <script>
     function ready(fn) {
         if (document.readyState != 'loading'){
@@ -77,6 +90,7 @@
         var gps_north_input = document.getElementById('gps_north');
         var gps_east_input = document.getElementById('gps_east');
         var download_speed = undefined;
+        var last_speed = undefined;
 
         /*
          * Ensure that all required values in the form are present
@@ -91,10 +105,14 @@
          * Update the value of download_speed to a new sampling
          */
         var measureSpeed = function() {
+            last_speed = download_speed;
             var start_time, end_time = undefined;
             var test = new Image();
             test.onload = function loadImage() {
                 end_time = Date.now();
+                download_speed = <?= $image_size ?> / (end_time - start_time); //bytes per second
+                console.log(download_speed);
+                sendReport();
             }
             test.onerror = function loadError() {
                 console.log("error loading image.");
@@ -105,17 +123,13 @@
 
             start_time = Date.now();
             test.src = source_string;
-            while(end_time == undefined) {
-                ; //wait for image to load
-            }
-            download_speed = <?= $image_size ?> / (end_time - start_time); //bytes per second
         };
 
         /*
          * Send the lastest data to be collected.
          */
         var sendReport = function() {
-            if (download_speed == undefined) {
+            if (download_speed == undefined || last_speed == download_speed) {
                 return;
             }
             var data = new FormData();
@@ -140,13 +154,10 @@
                     + "selected an ISP and your GPS coordinates and then try again?");
                 return;
             }
+            alert("Thank you! Please just leave this tab open and go back to your browsing.");
             measureSpeed();
-            sendReport();
             var intervalID = window.setInterval(function handleData() {
-                console.log("run");
                 measureSpeed();
-                sendReport();
-                
             }, 60000);
         };
 

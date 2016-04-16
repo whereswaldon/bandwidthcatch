@@ -17,9 +17,10 @@ $max_bandwidth = 1000;
 
 $default_timezone = 'America/New_York';
 
-$base_url = 'https://eca50bd4.ngrok.io/';
+$base_url = 'http://7fc0d5d1.ngrok.io/';
 $post_request_target = $base_url.'collectData.php';
 $image_name = 'test.jpg';
 $image_path = $base_url.$image_name;
 
-$image_size = 1000; //this is in bytes
+$image_size_bytes = 4742956; //this is in bytes
+$image_size = $image_size_bytes * 8; //this is in bits
